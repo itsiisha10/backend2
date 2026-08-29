@@ -12,7 +12,17 @@
  *
  * Example line:  [a3f9c1e2] POST /posts 201
  */
-
 module.exports = function logger(req, res, next) {
-  // TODO: register res.on('finish', ...) to log method, path, status, then next().
+
+  // Log after the response has finished
+  res.on('finish', () => {
+
+    const logMessage = req.id
+      ? `[${req.id}] ${req.method} ${req.path} ${res.statusCode}`
+      : `${req.method} ${req.path} ${res.statusCode}`;
+
+    console.log(logMessage);
+  });
+
+  next();
 };
