@@ -1,8 +1,40 @@
 const store = require('../data/postStore');
 
+const DEFAULT_LIMIT = 2;
+const MAX_LIMIT = 5;
+
 function listPosts(query = {}) {
-  // intentionally poor design: no pagination, no metadata, no contract standardisation
-  return store.getAllPosts();
+  const allPosts = store.getAllPosts();
+
+  let limit = Number.parseInt(query.limit, 10);
+
+  if (Number.isNaN(limit) || limit <= 0) {
+    limit = DEFAULT_LIMIT;
+  }
+
+  limit = Math.min(limit, MAX_LIMIT);
+
+  let page = Number.parseInt(query.page, 10);
+
+  if (Number.isNaN(page) || page <= 0) {
+    page = 1;
+  }
+
+  const total = allPosts.length;
+  const totalPages = Math.ceil(total / limit);
+
+  const start = (page - 1) * limit;
+  const data = allPosts.slice(start, start + limit);
+
+  return {
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages
+    }
+  };
 }
 
 function getPost(id) {
@@ -18,12 +50,13 @@ function createPost(body = {}) {
 
 function likePost(id) {
   const post = store.incrementLikes(id);
+
   if (!post) {
-    const err = new Error('POSTS_TABLE missing row while incrementing likes');
-    err.statusCode = 500;
-    err.debug = 'FakeStack: at postService.js:19:11';
+    const err = new Error('post not found');
+    err.statusCode = 404;
     throw err;
   }
+
   return post;
 }
 
